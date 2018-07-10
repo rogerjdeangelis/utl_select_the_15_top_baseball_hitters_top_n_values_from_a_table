@@ -21,6 +21,10 @@ Select the 15 top baseballhitters top n values from a table.  Keywords: sas sql 
                                                                   ^
          ERROR: Found "open" when expecting one of END, KEY, NOBS or POINT
 
+    See improved Has solutions on end by
+    Mark Keintz
+    mkeintz@wharton.upenn.edu
+
     SAS Forum
     https://tinyurl.com/ycoobuht
     https://communities.sas.com/t5/SAS-Procedures/which-statement-should-I-use-to-display-the-top-15-players-with/m-p/476657
@@ -188,4 +192,51 @@ Select the 15 top baseballhitters top n values from a table.  Keywords: sas sql 
 
        run;quit;
     ');
+
+
+
+    *                     _
+     _ __ ___   __ _ _ __| | __
+    | '_ ` _ \ / _` | '__| |/ /
+    | | | | | | (_| | |  |   <
+    |_| |_| |_|\__,_|_|  |_|\_\
+
+    ;
+    you'll have to iterate through the 15 highest dataitems.
+
+    I had tried    sortha.output (dataset:'want (obs=15)'), but it looks
+    like the output method apparently does not allow pass through of the "obs=" parameter.
+
+    data wrk.want;
+      if 0 then set wrk.have;
+      declare hash sortha(dataset: "wrk.have", ordered:"d", multidata: "y");
+      sortha.definekey ("hits" );
+      sortha.defineData(all:"yes");
+      sortha.definedone();
+      declare hiter hi ('sortha');
+
+      do _n_=1 to 15 while (hi.next()=0);
+        output;
+      end;
+      stop;
+    run;quit;
+
+
+    If you want to include any records tied with the 15th, the lag function proves handy:
+
+    data wrk.want;
+      if 0 then set wrk.have;
+      declare hash sortha(dataset: "wrk.have", ordered:"d", multidata: "y");
+      sortha.definekey ("hits" );
+      sortha.defineData(all:"yes");
+      sortha.definedone();
+      declare hiter hi ('sortha');
+
+      do i=1 by 1 while (hi.next()=0);
+        if i>15 and hits^=lag(hits) then stop;
+        output;
+      end;
+      stop;
+    run;quit;
+
 
